@@ -1,5 +1,5 @@
-import FigmaLogin from "./FigmaLogin";
+import Strategy from "./strategy";
 
-export { FigmaLogin };
+export { Strategy };
 
-export default FigmaLogin;
+export default Strategy;
