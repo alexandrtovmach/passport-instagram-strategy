@@ -56,44 +56,38 @@ class InstagramStrategy extends Strategy {
 
     if (req.query && req.query.code) {
       // token request
-      const loaded = async (err: any) => {
-        if (err) {
-          return this.error(err);
-        }
-
-        const form = {
-          app_id: this.clientId,
-          app_secret: this.clientSecret,
-          redirect_uri: callbackUrl,
-          code: req.query.code,
-          grant_type: "authorization_code"
-        };
-        const headers = {
-          "Content-Type": "application/x-www-form-urlencoded"
-        };
-
-        request
-          .post({ url: SHORT_LIVED_ACCESS_TOKEN_URL, form, headers })
-          .then(async ({ access_token, user_id }: AuthTokenResponse) => {
-            const longLivedAccessTokenRes = await request.get(
-              `${LONG_LIVED_ACCESS_TOKEN_URL}?grant_type=ig_exchange_token&client_secret=${this.clientSecret}&access_token=${access_token}`
-            );
-            this.userProfile(
-              longLivedAccessTokenRes.access_token,
-              (err, profile) => {
-                if (err) {
-                  return this.error(err);
-                }
-                this.success(profile);
-              }
-            );
-          })
-          .catch((err: any) => {
-            return this.error(
-              new TokenError("Failed to obtain access token", err)
-            );
-          });
+      const form = {
+        app_id: this.clientId,
+        app_secret: this.clientSecret,
+        redirect_uri: callbackUrl,
+        code: req.query.code,
+        grant_type: "authorization_code"
       };
+      const headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+      };
+
+      request
+        .post({ url: SHORT_LIVED_ACCESS_TOKEN_URL, form, headers })
+        .then(async ({ access_token, user_id }: AuthTokenResponse) => {
+          const longLivedAccessTokenRes = await request.get(
+            `${LONG_LIVED_ACCESS_TOKEN_URL}?grant_type=ig_exchange_token&client_secret=${this.clientSecret}&access_token=${access_token}`
+          );
+          this.userProfile(
+            longLivedAccessTokenRes.access_token,
+            (err, profile) => {
+              if (err) {
+                return this.error(err);
+              }
+              this.success(profile);
+            }
+          );
+        })
+        .catch((err: any) => {
+          return this.error(
+            new TokenError("Failed to obtain access token", err)
+          );
+        });
     } else {
       // code request
       const getScope = (scope?: string | [], scopeSeparator?: string) => {
