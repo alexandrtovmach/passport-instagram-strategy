@@ -120,7 +120,7 @@ class InstagramStrategy extends OAuth2Strategy {
         if (scope && Array.isArray(scope)) {
           return scope.join(scopeSeparator);
         } else {
-          return scope || "";
+          return scope || "user_profile";
         }
       };
       const scopes = getScope(options.scope, options.scopeSeparator || ",");
@@ -150,17 +150,4 @@ class InstagramStrategy extends OAuth2Strategy {
   };
 }
 
-const getStrategy = (
-  options: StrategyOptions,
-  verify: VerifyFunction
-): InstagramStrategy =>
-  new InstagramStrategy(
-    {
-      ...options,
-      authorizationURL: options.authorizationURL || AUTHORIZE_URL,
-      tokenURL: options.tokenURL || SHORT_LIVED_ACCESS_TOKEN_URL
-    },
-    verify
-  );
-
-export default getStrategy;
+export default InstagramStrategy;
