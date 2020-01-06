@@ -7,6 +7,7 @@ import request from "request-promise-native";
 import {
   InternalOAuthError,
   StrategyOptions,
+  VerifyFunction,
   StateStore,
   AuthorizationError,
   TokenError
@@ -27,7 +28,7 @@ class InstagramStrategy extends Strategy {
   callbackURL?: string;
   name = "instagram";
 
-  constructor(options: StrategyOptions) {
+  constructor(options: StrategyOptions, verify: VerifyFunction) {
     super();
     this.clientId = options.clientID;
     this.clientSecret = options.clientSecret;
