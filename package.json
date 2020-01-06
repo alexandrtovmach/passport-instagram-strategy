@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@types/passport-oauth2": "^1.4.8",
+    "@types/request-promise-native": "^1.0.17",
     "husky": "^3.0.5",
     "lint-staged": "^9.4.0",
     "prettier": "^1.14.3",
@@ -48,6 +49,9 @@
     "url": "https://github.com/alexandrtovmach/passport-instagram-strategy"
   },
   "dependencies": {
-    "passport-oauth2": "^1.5.0"
+    "original-url": "^1.2.3",
+    "passport-oauth2": "^1.5.0",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.8"
   }
 }
