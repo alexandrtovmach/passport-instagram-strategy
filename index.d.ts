@@ -1,5 +1,14 @@
 import { Strategy } from 'passport';
 
+interface StrategyOptions {
+	clientId: string;
+	clientSecret: string;
+	callbackUrl?: string;
+	scope?: string | string[];
+	scopeSeparator?: string;
+	sessionKey?: string;
+	state?: any;
+}
 interface AuthTokenResponse {
   access_token: string;
   user_id: number;
@@ -11,8 +20,10 @@ interface UserProfileResponse {
   username: string;
 }
 
-declare class InstagramStrategy extends Strategy {}
+declare class InstagramStrategy extends Strategy {
+	constructor(options: StrategyOptions)
+}
 
-export { AuthTokenResponse, UserProfileResponse };
+export { AuthTokenResponse, UserProfileResponse, StrategyOptions };
 
 export default InstagramStrategy;
