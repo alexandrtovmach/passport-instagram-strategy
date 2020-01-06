@@ -69,10 +69,13 @@ class InstagramStrategy extends Strategy {
 
       request
         .post({ url: SHORT_LIVED_ACCESS_TOKEN_URL, form, headers })
-        .then(async ({ access_token, user_id }: AuthTokenResponse) => {
+        .then(async (data: AuthTokenResponse) => {
+          console.log(1, data);
+          const { access_token, user_id } = data;
           const longLivedAccessTokenRes = await request.get(
             `${LONG_LIVED_ACCESS_TOKEN_URL}?grant_type=ig_exchange_token&client_secret=${this.clientSecret}&access_token=${access_token}`
           );
+          console.log(2, longLivedAccessTokenRes);
           this.userProfile(
             longLivedAccessTokenRes.access_token,
             (err, profile) => {
@@ -85,7 +88,7 @@ class InstagramStrategy extends Strategy {
         })
         .catch((err: any) => {
           return this.error(
-            new TokenError("Failed to obtain access token", err)
+            new TokenError("Failed to obtain access token", err.message || err)
           );
         });
     } else {
