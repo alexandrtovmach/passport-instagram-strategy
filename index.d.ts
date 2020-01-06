@@ -9,9 +9,15 @@ interface StrategyOptions {
 	sessionKey?: string;
 	state?: any;
 }
-interface AuthTokenResponse {
+interface ShortLivedAuthTokenResponse {
   access_token: string;
   user_id: number;
+}
+
+interface LongLivedAuthTokenResponse {
+  access_token: string;
+	expires_in: number;
+  token_type: string;
 }
 
 interface UserProfileResponse {
@@ -24,6 +30,6 @@ declare class InstagramStrategy extends Strategy {
 	constructor(options: StrategyOptions)
 }
 
-export { AuthTokenResponse, UserProfileResponse, StrategyOptions };
+export { ShortLivedAuthTokenResponse, LongLivedAuthTokenResponse, UserProfileResponse, StrategyOptions };
 
 export default InstagramStrategy;
