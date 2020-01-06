@@ -69,22 +69,28 @@ class InstagramStrategy extends Strategy {
 
       request
         .post({ url: SHORT_LIVED_ACCESS_TOKEN_URL, form, headers })
-        .then(async (data: AuthTokenResponse) => {
-          console.log(1, data);
-          const { access_token, user_id } = data;
-          const longLivedAccessTokenRes = await request.get(
-            `${LONG_LIVED_ACCESS_TOKEN_URL}?grant_type=ig_exchange_token&client_secret=${this.clientSecret}&access_token=${access_token}`
+        .then((jsonAccessToken: string) => {
+          const { access_token, user_id }: AuthTokenResponse = JSON.parse(
+            jsonAccessToken
           );
-          console.log(2, longLivedAccessTokenRes);
-          this.userProfile(
-            longLivedAccessTokenRes.access_token,
-            (err, profile) => {
-              if (err) {
-                return this.error(err);
-              }
-              this.success(profile);
-            }
-          );
+          request
+            .get(
+              `${LONG_LIVED_ACCESS_TOKEN_URL}?grant_type=ig_exchange_token&client_secret=${this.clientSecret}&access_token=${access_token}`
+            )
+            .then((jsonLongLivedAccessToken: string) => {
+              const longLivedAccessTokenRes = JSON.parse(
+                jsonLongLivedAccessToken
+              );
+              this.userProfile(
+                longLivedAccessTokenRes.access_token,
+                (err, profile) => {
+                  if (err) {
+                    return this.error(err);
+                  }
+                  this.success(profile);
+                }
+              );
+            });
         })
         .catch((err: any) => {
           return this.error(
