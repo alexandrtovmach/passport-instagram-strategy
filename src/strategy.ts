@@ -15,11 +15,17 @@ const AUTHORIZE_URL = "https://api.instagram.com/oauth/authorize/";
 const SHORT_LIVED_ACCESS_TOKEN_URL =
   "https://api.instagram.com/oauth/access_token/";
 const LONG_LIVED_ACCESS_TOKEN_URL = "https://graph.instagram.com/access_token/";
-const GET_USER_URL = "https://api.instagram.com/v1/users/this/";
+const GET_USER_URL = "https://graph.instagram.com/me/";
 
 interface AuthTokenResponse {
   access_token: string;
   user_id: number;
+}
+
+interface UserProfileResponse {
+  id: number;
+  account_type: "BUSINESS" | "CONSUMER" | "CREATOR";
+  username: string;
 }
 
 class InstagramStrategy extends OAuth2Strategy {
@@ -118,7 +124,7 @@ class InstagramStrategy extends OAuth2Strategy {
         }
       };
       const scopes = getScope(options.scope, options.scopeSeparator || ",");
-      const redirectUrl = `https://api.instagram.com/oauth/authorize?app_id=${this.clientId}&redirect_uri=${callbackURL}&scope=${scopes}&state=${options.state}&response_type=code`;
+      const redirectUrl = `${AUTHORIZE_URL}?app_id=${this.clientId}&redirect_uri=${callbackURL}&scope=${scopes}&state=${options.state}&response_type=code`;
       const location = url.format(redirectUrl);
       this.redirect(location);
     }
@@ -128,42 +134,19 @@ class InstagramStrategy extends OAuth2Strategy {
     accessToken: string,
     done: (err?: Error | null, profile?: any) => void
   ): void => {
-    this._oauth2.get(GET_USER_URL, accessToken, (err, body) => {
-      if (err) {
-        return done(new InternalOAuthError("Can't get user profile", err));
-      }
-      if (!body) {
-        return done(new Error("User response is empty"));
-      }
-      if (typeof body !== "string") {
-        return done(new Error("User response is not valid format"));
-      }
-      try {
-        const json = JSON.parse(body);
-        const {
-          data: { id, full_name, last_name, first_name, username }
-        } = json;
+    request
+      .get(`${GET_USER_URL}?fields=id,username&access_token=${accessToken}`)
+      .then(({ username, id, account_type }: UserProfileResponse) => {
         done(null, {
           provider: "instagram",
           id,
           username,
-          displayName: full_name,
-          name: {
-            familyName: last_name,
-            givenName: first_name
-          },
-          _raw: body,
-          _json: json
+          accountType: account_type
         });
-      } catch (error) {
-        done(
-          new InternalOAuthError(
-            "Something went wrong with getting user",
-            error
-          )
-        );
-      }
-    });
+      })
+      .catch((err: any) => {
+        return done(new InternalOAuthError("Can't get user profile", err));
+      });
   };
 }
 
