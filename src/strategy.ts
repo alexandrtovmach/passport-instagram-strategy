@@ -1,15 +1,18 @@
 // @ts-ignore
 import originalURL from "original-url";
 import { Request } from "express";
+import { Strategy } from "passport";
 import url from "url";
 import request from "request-promise-native";
-import OAuth2Strategy, {
+import {
   InternalOAuthError,
   StrategyOptions,
-  VerifyFunction,
+  StateStore,
   AuthorizationError,
   TokenError
 } from "passport-oauth2";
+
+import { AuthTokenResponse, UserProfileResponse } from "../index";
 
 const AUTHORIZE_URL = "https://api.instagram.com/oauth/authorize/";
 const SHORT_LIVED_ACCESS_TOKEN_URL =
@@ -17,35 +20,19 @@ const SHORT_LIVED_ACCESS_TOKEN_URL =
 const LONG_LIVED_ACCESS_TOKEN_URL = "https://graph.instagram.com/access_token/";
 const GET_USER_URL = "https://graph.instagram.com/me/";
 
-interface AuthTokenResponse {
-  access_token: string;
-  user_id: number;
-}
-
-interface UserProfileResponse {
-  id: number;
-  account_type: "BUSINESS" | "CONSUMER" | "CREATOR";
-  username: string;
-}
-
-class InstagramStrategy extends OAuth2Strategy {
+class InstagramStrategy extends Strategy {
   clientId: string;
   clientSecret: string;
-  verify: OAuth2Strategy.VerifyFunction;
-  stateStore?: OAuth2Strategy.StateStore;
+  stateStore?: StateStore;
   callbackURL?: string;
   name = "instagram";
 
-  constructor(
-    options: OAuth2Strategy.StrategyOptions,
-    verify: OAuth2Strategy.VerifyFunction
-  ) {
-    super(options, verify);
+  constructor(options: StrategyOptions) {
+    super();
     this.clientId = options.clientID;
     this.clientSecret = options.clientSecret;
     this.callbackURL = options.callbackURL;
     this.stateStore = options.store;
-    this.verify = verify;
   }
 
   authenticate = (req: Request, options?: any) => {
