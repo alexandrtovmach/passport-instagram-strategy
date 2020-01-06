@@ -1,19 +1,20 @@
 // @ts-ignore
 import originalURL from "original-url";
 import { Request } from "express";
-import { Strategy } from "passport";
+import { Strategy, StrategyCreated } from "passport";
 import url from "url";
 import request from "request-promise-native";
 import {
   InternalOAuthError,
-  StrategyOptions,
-  VerifyFunction,
-  StateStore,
   AuthorizationError,
   TokenError
 } from "passport-oauth2";
 
-import { AuthTokenResponse, UserProfileResponse } from "../index";
+import {
+  AuthTokenResponse,
+  UserProfileResponse,
+  StrategyOptions
+} from "../index";
 
 const AUTHORIZE_URL = "https://api.instagram.com/oauth/authorize/";
 const SHORT_LIVED_ACCESS_TOKEN_URL =
@@ -24,19 +25,17 @@ const GET_USER_URL = "https://graph.instagram.com/me/";
 class InstagramStrategy extends Strategy {
   clientId: string;
   clientSecret: string;
-  stateStore?: StateStore;
-  callbackURL?: string;
+  callbackUrl?: string;
   name = "instagram";
 
-  constructor(options: StrategyOptions, verify: VerifyFunction) {
+  constructor(options: StrategyOptions) {
     super();
-    this.clientId = options.clientID;
+    this.clientId = options.clientId;
     this.clientSecret = options.clientSecret;
-    this.callbackURL = options.callbackURL;
-    this.stateStore = options.store;
+    this.callbackUrl = options.callbackUrl;
   }
 
-  authenticate = (req: Request, options?: any) => {
+  authenticate(req: Request, options?: any) {
     options = options || {};
 
     if (req.query && req.query.error) {
@@ -53,7 +52,7 @@ class InstagramStrategy extends Strategy {
       }
     }
 
-    const callbackURL = this.callbackURL || originalURL(req);
+    const callbackUrl = this.callbackUrl || originalURL(req);
 
     if (req.query && req.query.code) {
       // token request
@@ -65,7 +64,7 @@ class InstagramStrategy extends Strategy {
         const form = {
           app_id: this.clientId,
           app_secret: this.clientSecret,
-          redirect_uri: callbackURL,
+          redirect_uri: callbackUrl,
           code: req.query.code,
           grant_type: "authorization_code"
         };
@@ -95,13 +94,6 @@ class InstagramStrategy extends Strategy {
             );
           });
       };
-
-      const state = req.query.state;
-      try {
-        this.stateStore?.verify(req, state, loaded);
-      } catch (err) {
-        return this.error(err);
-      }
     } else {
       // code request
       const getScope = (scope?: string | [], scopeSeparator?: string) => {
@@ -112,16 +104,16 @@ class InstagramStrategy extends Strategy {
         }
       };
       const scopes = getScope(options.scope, options.scopeSeparator || ",");
-      const redirectUrl = `${AUTHORIZE_URL}?app_id=${this.clientId}&redirect_uri=${callbackURL}&scope=${scopes}&state=${options.state}&response_type=code`;
+      const redirectUrl = `${AUTHORIZE_URL}?app_id=${this.clientId}&redirect_uri=${callbackUrl}&scope=${scopes}&state=${options.state}&response_type=code`;
       const location = url.format(redirectUrl);
       this.redirect(location);
     }
-  };
+  }
 
-  userProfile = (
+  userProfile(
     accessToken: string,
     done: (err?: Error | null, profile?: any) => void
-  ): void => {
+  ) {
     request
       .get(`${GET_USER_URL}?fields=id,username&access_token=${accessToken}`)
       .then(({ username, id, account_type }: UserProfileResponse) => {
@@ -135,7 +127,7 @@ class InstagramStrategy extends Strategy {
       .catch((err: any) => {
         return done(new InternalOAuthError("Can't get user profile", err));
       });
-  };
+  }
 }
 
 export default InstagramStrategy;
