@@ -119,7 +119,10 @@ class InstagramStrategy extends Strategy {
   ) {
     request
       .get(`${GET_USER_URL}?fields=id,username&access_token=${accessToken}`)
-      .then(({ username, id, account_type }: UserProfileResponse) => {
+      .then((jsonUser: string) => {
+        const { username, id, account_type }: UserProfileResponse = JSON.parse(
+          jsonUser
+        );
         done(null, {
           provider: "instagram",
           id,
