@@ -1,39 +1,34 @@
-// @ts-ignore
-import originalURL from "original-url";
 import { Request } from "express";
 import { Strategy } from "passport";
 import url from "url";
-import { InternalOAuthError, AuthorizationError, TokenError } from "passport-oauth2";
 import {
   ShortLivedAuthTokenResponse,
   LongLivedAuthTokenResponse,
   StrategyOptions,
+  VerifyFunction,
   UserProfileResponse
-} from "../index";
+} from "../";
 import { AUTHORIZE_URL } from "./links";
 import { getShortLivedAccessToken, getLongLivedAccessToken, getUserProfile } from "./requests";
 
 class InstagramStrategy extends Strategy {
   clientId: string;
   clientSecret: string;
-  callbackUrl?: string;
+  callbackUrl: string;
+  verify: VerifyFunction;
   name = "instagram";
 
-  constructor(options: StrategyOptions) {
+  constructor(options: StrategyOptions, verify: VerifyFunction) {
     super();
     this.clientId = options.clientId;
     this.clientSecret = options.clientSecret;
     this.callbackUrl = options.callbackUrl;
+    this.verify = verify;
   }
 
   async authenticate(req: Request, options?: any) {
     options = options || {};
 
-    if (req.query && req.query.error) {
-      return this.error(new AuthorizationError(req.query.error_description, req.query.error, req.query.error_uri));
-    }
-
-    const callbackUrl = this.callbackUrl || originalURL(req);
     let tokenData: any = {};
     if (req.query && req.query.code) {
       // token request
@@ -41,7 +36,7 @@ class InstagramStrategy extends Strategy {
         const shortLivedAccessTokenData: ShortLivedAuthTokenResponse = await getShortLivedAccessToken({
           clientId: this.clientId,
           clientSecret: this.clientSecret,
-          callbackUrl: callbackUrl,
+          callbackUrl: this.callbackUrl,
           code: req.query.code
         });
 
@@ -60,7 +55,7 @@ class InstagramStrategy extends Strategy {
           ...longLivedAccessTokenData
         };
       } catch (err) {
-        return this.error(new TokenError("Failed to obtain access token", err.message || err));
+        return this.error(new Error("Failed to obtain access token"));
       }
 
       try {
@@ -68,14 +63,19 @@ class InstagramStrategy extends Strategy {
         if (!userData) {
           return this.error(new Error("Failed to fetch user data"));
         } else {
-          this.success({
-            provider: "instagram",
-            ...userData,
-            ...tokenData
+          this.verify(tokenData.access_token, userData, (err, user) => {
+            if (err) {
+              this.fail(err);
+            } else {
+              this.success({
+                provider: "instagram",
+                ...user
+              });
+            }
           });
         }
       } catch (err) {
-        return this.error(new InternalOAuthError("Can't get user profile", err));
+        return this.error(new Error("Can't get user profile"));
       }
     } else {
       // code request
@@ -87,7 +87,7 @@ class InstagramStrategy extends Strategy {
         }
       };
       const scopes = getScope(options.scope, options.scopeSeparator || ",");
-      const redirectUrl = `${AUTHORIZE_URL}?app_id=${this.clientId}&redirect_uri=${callbackUrl}&scope=${scopes}&state=${options.state}&response_type=code`;
+      const redirectUrl = `${AUTHORIZE_URL}?app_id=${this.clientId}&redirect_uri=${this.callbackUrl}&scope=${scopes}&state=${options.state}&response_type=code`;
       const location = url.format(redirectUrl);
       this.redirect(location);
     }
