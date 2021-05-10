@@ -2,7 +2,7 @@
   "name": "passport-instagram-strategy",
   "description": "Instagram strategy for passportjs",
   "main": "dist/index.js",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "author": {
     "name": "Alexandr Tovmach",
     "url": "https://alexandrtovmach.com/",
