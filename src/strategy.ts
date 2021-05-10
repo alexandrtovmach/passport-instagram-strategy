@@ -37,7 +37,7 @@ class InstagramStrategy extends Strategy {
           clientId: this.clientId,
           clientSecret: this.clientSecret,
           callbackUrl: this.callbackUrl,
-          code: req.query.code
+          code: String(req.query.code)
         });
 
         tokenData = {

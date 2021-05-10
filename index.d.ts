@@ -33,7 +33,7 @@ type VerifyFunction = (
 ) => void;
 
 declare class InstagramStrategy extends Strategy {
-  constructor(options: StrategyOptions);
+  constructor(options: StrategyOptions, verify: VerifyFunction);
 }
 
 export {
